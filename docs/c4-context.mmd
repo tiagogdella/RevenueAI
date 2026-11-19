@@ -1,0 +1,20 @@
+C4Context
+  title RevenueAI: System Context
+
+  Person(customer, "Customer", "Buyer of rice and rice bran. Sends orders by WhatsApp, e-mail or spreadsheet.")
+  Person(clerk, "Billing clerk", "Reviews and approves each invoice draft.")
+
+  System(revenueai, "RevenueAI", "Reads orders with AI, builds NF-e drafts from customer history, generates signed XML and DANFE after approval.")
+  System_Ext(sefaz, "SEFAZ", "State tax authority that authorizes NF-e. Simulated in v1.")
+  System_Ext(llm, "LLM provider", "OpenRouter models used to read orders.")
+  System_Ext(erp, "ERP", "System of record: customers, products, lots, stock, past invoices.")
+
+  BiRel(customer, revenueai, "Sends orders / receives DANFE", "WhatsApp, e-mail, spreadsheet / PDF")
+  Rel(clerk, revenueai, "Reviews and approves drafts", "Web UI")
+  Rel(revenueai, sefaz, "Transmits NF-e", "Issuer interface")
+  Rel(revenueai, llm, "Extracts order data", "HTTPS")
+  BiRel(revenueai, erp, "Reads history / hands over approved invoices", "Read-only export / import file")
+
+  UpdateRelStyle(customer, revenueai, $offsetX="-120", $offsetY="-10")
+  UpdateRelStyle(revenueai, sefaz, $offsetX="-45", $offsetY="-40")
+  UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")
