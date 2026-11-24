@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Segment {
+  RETAIL
+  WHOLESALE
+  INDUSTRY
+}
+
+enum Channel {
+  TEXT
+  SPREADSHEET
+  WHATSAPP
+  EMAIL
+}
+
+enum OrderStatus {
+  DRAFT
+  APPROVED
+  REJECTED
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  nickname  String?  // how they sign on WhatsApp, e.g. "Zé do Mercado"
+  cnpj      String   @unique @db.Char(14)
+  state     String   @db.Char(2) // UF, e.g. "RS"
+  cityCode  String   @db.Char(7) // IBGE municipality code
+  segment   Segment
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model Product {
+  id        Int         @id @default(autoincrement())
+  code      String      @unique // e.g. "ARZ-T1-5KG"
+  name      String
+  unit      String      // FD (bale), SC (bag), KG
+  ncm       String      @db.Char(8)
+  basePrice Decimal     @db.Decimal(12, 2)
+  lots      Lot[]
+  items     OrderItem[]
+}
+
+model Lot {
+  id        Int         @id @default(autoincrement())
+  code      String      @unique // e.g. L2611-03
+  productId Int
+  product   Product     @relation(fields: [productId], references: [id])
+  balance   Int         // in product units
+  expiresAt DateTime
+  items     OrderItem[]
+}
+
+model Order {
+  id           Int         @id @default(autoincrement())
+  channel      Channel
+  originalText String
+  customerId   Int?
+  customer     Customer?   @relation(fields: [customerId], references: [id])
+  status       OrderStatus @default(DRAFT)
+  createdAt    DateTime    @default(now())
+  items        OrderItem[]
+  invoice      Invoice?
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  lotId     Int?
+  lot       Lot?    @relation(fields: [lotId], references: [id])
+  quantity  Int
+  unitPrice Decimal @db.Decimal(12, 2)
+}
+
+model Invoice {
+  id        Int      @id @default(autoincrement())
+  series    Int      @default(1)
+  number    Int
+  accessKey String   @unique @db.Char(44)
+  xml       String
+  orderId   Int      @unique
+  order     Order    @relation(fields: [orderId], references: [id])
+  issuedAt  DateTime @default(now())
+
+  @@unique([series, number])
+}
