@@ -63,6 +63,7 @@ Source: [docs/c4-context.mmd](docs/c4-context.mmd)
 | [002](docs/adr/002-simulated-issuer.md) | SEFAZ transmission sits behind an `Issuer` interface and is simulated for now |
 | [003](docs/adr/003-human-approval.md) | The AI never issues an invoice by itself; a person approves every one |
 | [004](docs/adr/004-defaults-from-history.md) | Missing fields are filled from the history of the same customer and product |
+| [005](docs/adr/005-ambiguous-customer-ask-dont-guess.md) | When a message could mean more than one customer, the AI asks instead of guessing |
 
 ## Stack
 
@@ -92,6 +93,26 @@ features/      feature specs
 tools/         scripts for tasks we repeat (tests, front-end checks, diagram rendering…)
 roadmap.md     versions and steps
 ```
+
+## AI accuracy (eval)
+
+30 hand-written customer messages with the expected answer ([apps/api/evals/messages-30.json](apps/api/evals/messages-30.json)), run with `npm run eval` in `apps/api`. Model: `openai/gpt-4.1-mini`, temperature 0.
+
+| Metric | Before (2026-11-27) | After ([ADR 005](docs/adr/005-ambiguous-customer-ask-dont-guess.md)) |
+|---|---|---|
+| Customer · precision | 93.1% (27/29) | 100% (27/27) |
+| Customer · recall | 100% (27/27) | 100% (27/27) |
+| Customer · ambiguity caught | 33.3% (1/3) | 100% (3/3) |
+| Items · precision | 100% (36/36) | 100% (36/36) |
+| Items · recall | 100% (36/36) | 100% (36/36) |
+| Items · F1 | 100% | 100% |
+| Quantity right | 100% (36/36) | 100% (36/36) |
+| Price right | 100% (36/36) | 100% (36/36) |
+| **Whole order right** | **93.3% (28/30)** | **100% (30/30)** |
+
+**What it got wrong before:** a message that only said "Zé" was assigned to "Zé Carlos", although two customers match. The prompt now asks instead of guessing ([ADR 005](docs/adr/005-ambiguous-customer-ask-dont-guess.md)).
+
+**Read with care:** 30 messages is a small sample, and each one is worth about 3 points. 100% means no known failure on this set, not that the model never fails.
 
 ## Status
 

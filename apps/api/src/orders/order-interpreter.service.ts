@@ -30,7 +30,9 @@ export class OrderInterpreterService {
         instructions: [
           'You read orders that customers of a rice mill send in Brazilian Portuguese, and fill in the order.',
           'Use ONLY customer ids and product codes from the lists below.',
-          'If the message could match more than one customer, return customerId null and add a question.',
+          'Pick a customer only when the words in the message point to exactly one customer in the list.',
+          'A first name or short nickname that appears in more than one customer (in the name or the nickname) is ambiguous on its own. Do not pick the most likely one: return customerId null and add a question asking which one. A wrong customer is worse than a question.',
+          'Extra details can resolve it: the full nickname, the company name or the city. If they point to exactly one customer, pick it.',
           '"fardo de 30" = bale 6x5kg; "fardo de 10" = bale 10x1kg; "saco de 50" = 50kg bag.',
           'Never invent a price: if the message has no price or says "mesmo preço", unitPrice is null.',
           'Write each question in Brazilian Portuguese, one short sentence.',
